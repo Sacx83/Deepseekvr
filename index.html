@@ -4,71 +4,543 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DeepSeek VR Chat</title>
+  <!-- Load A-Frame first -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
     #loading {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       color: white; font-size: 24px; z-index: 1000;
+      text-align: center;
+    }
+    #api-config {
+      position: absolute; top: 10px; left: 10px;
+      background: rgba(0,0,0,0.8); padding: 15px;
+      border-radius: 8px; z-index: 1000; color: white;
+      max-width: 300px;
+    }
+    #api-config input {
+      width: 100%; padding: 8px; margin: 5px 0;
+      border: none; border-radius: 4px;
+      background: rgba(255,255,255,0.1); color: white;
+    }
+    #api-config input::placeholder { color: #ccc; }
+    #api-config button {
+      background: #007bff; color: white; border: none;
+      padding: 8px 16px; border-radius: 4px; cursor: pointer;
+      margin: 5px 0;
+    }
+    #api-config button:hover { background: #0056b3; }
+    .status { font-size: 12px; margin-top: 10px; opacity: 0.8; }
+    #hide-config {
+      position: absolute; top: 10px; right: 10px;
+      background: rgba(0,0,0,0.8); color: white; border: none;
+      padding: 10px; border-radius: 4px; cursor: pointer; z-index: 1001;
     }
   </style>
 </head>
 <body>
-  <div id="loading">Loading VR Experience...</div>
+  <div id="loading">
+    <div>Loading VR Experience...</div>
+    <div style="font-size: 14px; margin-top: 10px;">Configure your DeepSeek API key in the top-left panel</div>
+  </div>
+  
+  <div id="api-config">
+    <h3 style="margin-top: 0;">DeepSeek API Configuration</h3>
+    <input type="text" id="api-key" placeholder="Enter your DeepSeek API key" />
+    <input type="text" id="api-url" placeholder="API URL (optional)" value="https://api.deepseek.com/chat/completions" />
+    <button onclick="saveConfig()">Save Configuration</button>
+    <button onclick="testConnection()">Test Connection</button>
+    <div class="status" id="status">Enter your API key to get started</div>
+  </div>
+  
+  <button id="hide-config" onclick="toggleConfig()">Hide Panel</button>
 
-  <a-scene loading-screen="enabled: false">
+  <a-scene embedded loading-screen="enabled: false" cursor="rayOrigin: mouse">
     <!-- Environment -->
-    <a-sky color="#222"></a-sky>
-    <a-circle position="0 -1 0" rotation="-90 0 0" radius="5" color="#333"></a-circle>
-    <a-light type="ambient" intensity="0.5"></a-light>
-    <a-light type="directional" intensity="0.8" position="-1 2 -2"></a-light>
-
+    <a-sky color="#001122"></a-sky>
+    <a-circle position="0 -1 0" rotation="-90 0 0" radius="8" color="#112233"></a-circle>
+    
+    <!-- Lighting -->
+    <a-light type="ambient" intensity="0.4"></a-light>
+    <a-light type="directional" intensity="0.8" position="-2 4 2"></a-light>
+    <a-light type="point" intensity="0.5" position="0 2 0" color="#00ff88"></a-light>
+    
     <!-- AI Response Panel -->
     <a-entity
       id="ai-response"
-      text="value: Hello! Ask me anything in VR.; 
-            color: white; align: center; width: 3;
-            wrapCount: 30"
-      position="0 1.5 -2">
+      geometry="primitive: plane; width: 4; height: 2"
+      material="color: #001122; opacity: 0.8"
+      text="value: Welcome to DeepSeek VR Chat!\n\nClick the microphone button below to start speaking,\nor configure your API key in the panel above.; 
+            color: #00ff88; align: center; width: 6; wrapCount: 40"
+      position="0 2 -3">
     </a-entity>
-
+    
     <!-- Microphone Button -->
     <a-entity
       id="mic-button"
-      geometry="primitive: sphere; radius: 0.2"
-      material="color: red; shader: flat"
-      position="0 0.5 -1"
-      animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; loop: true; dir: alternate"
-      cursor-listener>
+      geometry="primitive: sphere; radius: 0.25"
+      material="color: #ff4444; shader: flat; emissive: #ff2222; emissiveIntensity: 0.3"
+      position="0 0.5 -2"
+      animation="property: rotation; to: 0 360 0; dur: 4000; loop: true"
+      cursor-listener
+      class="clickable">
       <a-entity
-        text="value: Click to Speak; 
-              color: white; align: center; width: 0.5"
-        position="0 -0.3 0">
+        text="value: 🎤 SPEAK; 
+              color: white; align: center; width: 8"
+        position="0 -0.4 0">
       </a-entity>
     </a-entity>
-
-    <!-- User Prompt -->
+    
+    <!-- User Prompt Display -->
     <a-entity
       id="user-prompt"
-      text="value: Ready; 
-            color: #0ff; align: center; width: 2"
-      position="0 1 -1.5"
+      geometry="primitive: plane; width: 3; height: 0.5"
+      material="color: #001122; opacity: 0.9"
+      text="value: Listening...; 
+            color: #00ffff; align: center; width: 4"
+      position="0 1.2 -2.5"
       visible="false">
+    </a-entity>
+    
+    <!-- Status Indicator -->
+    <a-entity
+      id="status-indicator"
+      geometry="primitive: cylinder; radius: 0.1; height: 0.05"
+      material="color: #00ff00"
+      position="0 0.8 -1.8">
+    </a-entity>
+    
+    <!-- Camera with cursor -->
+    <a-entity
+      id="rig"
+      movement-controls="fly: false; constrainToNavMesh: false">
+      <a-entity
+        camera="active: true"
+        look-controls="pointerLockEnabled: false"
+        wasd-controls="acceleration: 20">
+        <a-cursor
+          geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+          material="color: white; shader: flat"
+          position="0 0 -1"
+          raycaster="objects: .clickable">
+        </a-cursor>
+      </a-entity>
     </a-entity>
   </a-scene>
 
-  <!-- Load A-Frame and dependencies -->
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-  
-  <!-- Load app after everything is ready -->
   <script>
+    // Configuration management
+    let config = {
+      apiKey: '',
+      apiUrl: 'https://api.deepseek.com/chat/completions'
+    };
+
+    // UI References
+    const elements = {
+      loading: document.getElementById('loading'),
+      apiConfig: document.getElementById('api-config'),
+      hideConfig: document.getElementById('hide-config'),
+      status: document.getElementById('status')
+    };
+
+    // VR Elements (will be set after scene loads)
+    let vrElements = {};
+
+    // Speech recognition
+    let recognition = null;
+    let isListening = false;
+    let isProcessing = false;
+
+    // Initialize when scene loads
     document.querySelector("a-scene").addEventListener("loaded", () => {
-      document.getElementById("loading").style.display = "none";
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'app.js';
-      document.body.appendChild(script);
+      console.log('Scene loaded, initializing...');
+      elements.loading.style.display = "none";
+      
+      // Wait a bit more for all entities to be ready
+      setTimeout(() => {
+        initializeVRElements();
+      }, 500);
+    });
+
+    function initializeVRElements() {
+      console.log('Initializing VR elements...');
+      
+      // Get VR elements with error checking
+      vrElements = {
+        aiResponse: document.getElementById('ai-response'),
+        micButton: document.getElementById('mic-button'),
+        userPrompt: document.getElementById('user-prompt'),
+        statusIndicator: document.getElementById('status-indicator')
+      };
+
+      // Check if all elements were found
+      const missingElements = [];
+      Object.keys(vrElements).forEach(key => {
+        if (!vrElements[key]) {
+          missingElements.push(key);
+        }
+      });
+
+      if (missingElements.length > 0) {
+        console.error('Missing VR elements:', missingElements);
+        updateStatus(`Error: Missing elements - ${missingElements.join(', ')}`);
+        return;
+      }
+
+      console.log('All VR elements found, setting up...');
+
+      // Set up event listeners
+      setupEventHandlers();
+      
+      // Initialize speech recognition
+      initSpeechRecognition();
+      
+      // Load saved config
+      loadSavedConfig();
+      
+      updateStatus('Ready! Configure your API key to start chatting.');
+    }
+
+    function setupEventHandlers() {
+      console.log('Setting up event handlers...');
+      
+      if (!vrElements.micButton) {
+        console.error('Mic button not found');
+        return;
+      }
+
+      // Microphone button click
+      vrElements.micButton.addEventListener('click', toggleListening);
+      
+      // Handle cursor events for visual feedback
+      vrElements.micButton.addEventListener('mouseenter', () => {
+        if (!isProcessing && vrElements.micButton) {
+          vrElements.micButton.setAttribute('material', 'color: #ff6666');
+        }
+      });
+      
+      vrElements.micButton.addEventListener('mouseleave', () => {
+        if (!isProcessing && vrElements.micButton) {
+          vrElements.micButton.setAttribute('material', 'color: #ff4444');
+        }
+      });
+      
+      console.log('Event handlers set up successfully');
+    }
+
+    function initSpeechRecognition() {
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+        
+        recognition.onstart = () => {
+          console.log('Speech recognition started');
+          isListening = true;
+          if (vrElements.userPrompt) {
+            vrElements.userPrompt.setAttribute('visible', true);
+            vrElements.userPrompt.setAttribute('text', 'value: Listening... Speak now!');
+          }
+          if (vrElements.micButton) {
+            vrElements.micButton.setAttribute('material', 'color: #00ff00');
+          }
+          if (vrElements.statusIndicator) {
+            vrElements.statusIndicator.setAttribute('material', 'color: #00ff00');
+          }
+        };
+        
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          console.log('Speech recognized:', transcript);
+          if (vrElements.userPrompt) {
+            vrElements.userPrompt.setAttribute('text', `value: You said: "${transcript}"`);
+          }
+          processUserInput(transcript);
+        };
+        
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          if (vrElements.userPrompt) {
+            vrElements.userPrompt.setAttribute('text', `value: Error: ${event.error}`);
+          }
+          resetMicButton();
+        };
+        
+        recognition.onend = () => {
+          console.log('Speech recognition ended');
+          isListening = false;
+          if (!isProcessing) {
+            resetMicButton();
+          }
+        };
+      } else {
+        updateStatus('Speech recognition not supported in this browser');
+        vrElements.aiResponse.setAttribute('text', 'value: Speech recognition not supported. Please use a compatible browser like Chrome.');
+      }
+    }
+
+    function toggleListening() {
+      console.log('Toggle listening called');
+      
+      if (!config.apiKey) {
+        updateStatus('Please configure your API key first');
+        if (vrElements.aiResponse) {
+          vrElements.aiResponse.setAttribute('text', 'value: Please configure your DeepSeek API key in the panel above before starting a conversation.');
+        }
+        return;
+      }
+
+      if (isProcessing) {
+        console.log('Already processing, ignoring click');
+        return;
+      }
+
+      if (!recognition) {
+        updateStatus('Speech recognition not available');
+        return;
+      }
+
+      if (isListening) {
+        console.log('Stopping recognition');
+        recognition.stop();
+      } else {
+        console.log('Starting recognition');
+        recognition.start();
+      }
+    }
+
+    async function processUserInput(userInput) {
+      console.log('Processing user input:', userInput);
+      isProcessing = true;
+      
+      if (vrElements.micButton) {
+        vrElements.micButton.setAttribute('material', 'color: #ffaa00');
+      }
+      if (vrElements.statusIndicator) {
+        vrElements.statusIndicator.setAttribute('material', 'color: #ffaa00');
+      }
+      if (vrElements.userPrompt) {
+        vrElements.userPrompt.setAttribute('text', `value: Processing: "${userInput}"`);
+      }
+
+      try {
+        const response = await callDeepSeekAPI(userInput);
+        console.log('API response received:', response);
+        
+        if (vrElements.aiResponse) {
+          vrElements.aiResponse.setAttribute('text', `value: ${response}`);
+        }
+        
+        // Speak the response
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(response);
+          utterance.rate = 0.9;
+          utterance.pitch = 1.1;
+          speechSynthesis.speak(utterance);
+        }
+      } catch (error) {
+        console.error('API Error:', error);
+        if (vrElements.aiResponse) {
+          vrElements.aiResponse.setAttribute('text', `value: Error: ${error.message}`);
+        }
+      }
+
+      setTimeout(() => {
+        if (vrElements.userPrompt) {
+          vrElements.userPrompt.setAttribute('visible', false);
+        }
+        resetMicButton();
+      }, 3000);
+    }
+
+    async function callDeepSeekAPI(message) {
+      console.log('Making API call to:', config.apiUrl);
+      console.log('Using API key:', config.apiKey ? `${config.apiKey.substring(0, 10)}...` : 'None');
+      
+      const requestBody = {
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful AI assistant in a VR environment. Keep responses concise but informative, suitable for speech synthesis. Limit responses to 2-3 sentences.'
+          },
+          {
+            role: 'user',
+            content: message
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.7
+      };
+
+      console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
+      try {
+        const response = await fetch(config.apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
+          
+          let errorMessage = `API request failed: ${response.status} ${response.statusText}`;
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.error && errorData.error.message) {
+              errorMessage = errorData.error.message;
+            }
+          } catch (parseError) {
+            console.log('Could not parse error response as JSON');
+          }
+          
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        console.log('API Response:', data);
+        
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          return data.choices[0].message.content;
+        } else {
+          throw new Error('Invalid API response format');
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+        
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+          throw new Error('Network error: Cannot connect to DeepSeek API. Check your internet connection or try a different browser. This might be a CORS issue.');
+        }
+        
+        throw error;
+      }
+    }
+
+    function resetMicButton() {
+      console.log('Resetting mic button');
+      isProcessing = false;
+      if (vrElements.micButton) {
+        vrElements.micButton.setAttribute('material', 'color: #ff4444');
+      }
+      if (vrElements.statusIndicator) {
+        vrElements.statusIndicator.setAttribute('material', 'color: #00ff00');
+      }
+    }
+
+    // Configuration functions
+    function saveConfig() {
+      const apiKey = document.getElementById('api-key').value.trim();
+      const apiUrl = document.getElementById('api-url').value.trim();
+      
+      if (!apiKey) {
+        updateStatus('Please enter your API key');
+        return;
+      }
+      
+      config.apiKey = apiKey;
+      config.apiUrl = apiUrl || 'https://api.deepseek.com/chat/completions';
+      
+      // Save to localStorage
+      localStorage.setItem('deepseek-vr-config', JSON.stringify(config));
+      
+      updateStatus('Configuration saved successfully!');
+      if (vrElements.aiResponse) {
+        vrElements.aiResponse.setAttribute('text', 'value: Configuration saved! You can now start speaking by clicking the microphone button.');
+      }
+    }
+
+    async function testConnection() {
+      const apiKey = document.getElementById('api-key').value.trim();
+      const apiUrl = document.getElementById('api-url').value.trim() || 'https://api.deepseek.com/chat/completions';
+      
+      if (!apiKey) {
+        updateStatus('Please enter your API key first');
+        return;
+      }
+      
+      updateStatus('Testing connection...');
+      
+      try {
+        console.log('Testing connection to:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'deepseek-chat',
+            messages: [{ role: 'user', content: 'Hello, this is a test.' }],
+            max_tokens: 10
+          })
+        });
+        
+        console.log('Test response status:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Test response data:', data);
+          updateStatus('✅ Connection successful!');
+        } else {
+          const errorText = await response.text();
+          console.error('Test error response:', errorText);
+          updateStatus(`❌ Connection failed: ${response.status} ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error('Test connection error:', error);
+        
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+          updateStatus('❌ CORS Error: Try using a CORS proxy or run from a local server. DeepSeek API may not allow direct browser requests.');
+        } else {
+          updateStatus(`❌ Connection error: ${error.message}`);
+        }
+      }
+    }
+
+    function loadSavedConfig() {
+      const saved = localStorage.getItem('deepseek-vr-config');
+      if (saved) {
+        config = JSON.parse(saved);
+        document.getElementById('api-key').value = config.apiKey;
+        document.getElementById('api-url').value = config.apiUrl;
+        updateStatus('Saved configuration loaded');
+      }
+    }
+
+    function toggleConfig() {
+      const isHidden = elements.apiConfig.style.display === 'none';
+      elements.apiConfig.style.display = isHidden ? 'block' : 'none';
+      elements.hideConfig.textContent = isHidden ? 'Hide Panel' : 'Show Panel';
+    }
+
+    function updateStatus(message) {
+      elements.status.textContent = message;
+      console.log('Status:', message);
+    }
+
+    // Handle escape key to show/hide config
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        toggleConfig();
+      }
     });
   </script>
 </body>
