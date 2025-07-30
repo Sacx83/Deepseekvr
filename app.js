@@ -1,45 +1,29 @@
-// Initialize Speech Recognition
+// app.js
 import { askDeepSeek, speakText } from './deepseek.js';
+
+// Initialize Speech Recognition
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = new SpeechRecognition();
 recognition.lang = 'en-US';
 recognition.interimResults = false;
 
+// DOM Elements
+const micButton = document.querySelector('#mic-button');
+const aiResponse = document.querySelector('#ai-response');
+const userPrompt = document.querySelector('#user-prompt');
+
 // State
 let isListening = false;
 let permissionGranted = false;
 
-// Mic Button Handler
-document.querySelector('#mic-button').addEventListener('click', async () => {
-  if (!permissionGranted) {
-    await requestMicrophonePermission();
-    if (!permissionGranted) return;
-  }
-
-  if (isListening) {
-    recognition.stop();
-    return;
-  }
-
-  try {
-    recognition.start();
-    isListening = true;
-    updateUIForListening(true);
-  } catch (error) {
-    console.error("Mic error:", error);
-    updateUIForError("Mic access denied");
-  }
-});
-
-// Permission Request
+// Request Microphone Permission
 async function requestMicrophonePermission() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    stream.getTracks().forEach(track => track.stop()); // Immediately release
-    permissionGranted = true;
+    stream.getTracks().forEach(track => track.stop()); // Release immediately
     return true;
   } catch (error) {
-    console.error("Permission denied:", error);
+    console.error("Mic permission denied:", error);
     updateUIForError("Please allow microphone access");
     return false;
   }
@@ -47,25 +31,32 @@ async function requestMicrophonePermission() {
 
 // UI Updates
 function updateUIForListening(listening) {
-  const micButton = document.querySelector('#mic-button');
-  const userPrompt = document.querySelector('#user-prompt');
-  
-  micButton.setAttribute('material', 'color', listening ? 'green' : 'red');
+  micButton.setAttribute('material', 'color', listening ? '#4CAF50' : '#F44336');
   userPrompt.setAttribute('visible', listening);
   userPrompt.setAttribute('text', 'value', listening ? 'Listening...' : 'Ready');
 }
 
 function updateUIForError(message) {
-  const userPrompt = document.querySelector('#user-prompt');
-  userPrompt.setAttribute('visible', 'true');
   userPrompt.setAttribute('text', 'value', message);
+  userPrompt.setAttribute('visible', 'true');
   setTimeout(() => userPrompt.setAttribute('visible', 'false'), 3000);
 }
 
-// Speech Recognition Events
-recognition.onresult = (event) => {
+// Event Handlers
+recognition.onresult = async (event) => {
   const transcript = event.results[0][0].transcript;
-  processUserInput(transcript);
+  userPrompt.setAttribute('text', 'value', `You: ${transcript}`);
+  
+  try {
+    const response = await askDeepSeek(transcript);
+    aiResponse.setAttribute('text', 'value', response);
+    speakText(response);
+  } catch (error) {
+    updateUIForError("Error processing request");
+  }
+  
+  isListening = false;
+  updateUIForListening(false);
 };
 
 recognition.onerror = (event) => {
@@ -74,25 +65,26 @@ recognition.onerror = (event) => {
   updateUIForListening(false);
 };
 
-recognition.onend = () => {
-  if (isListening) recognition.start(); // Continuous listening
-};
-
-// Process User Input
-async function processUserInput(text) {
-  const userPrompt = document.querySelector('#user-prompt');
-  const aiResponse = document.querySelector('#ai-response');
-  
-  userPrompt.setAttribute('text', 'value', `You: ${text}`);
-  
-  try {
-    const response = await askDeepSeek(text);
-    aiResponse.setAttribute('text', 'value', response);
-    speakText(response);
-  } catch (error) {
-    aiResponse.setAttribute('text', 'value', "Error getting response");
+// Mic Button Interaction
+micButton.addEventListener('click', async () => {
+  if (!permissionGranted) {
+    permissionGranted = await requestMicrophonePermission();
+    if (!permissionGranted) return;
   }
-  
-  isListening = false;
-  updateUIForListening(false);
-}
+
+  if (isListening) {
+    recognition.stop();
+    isListening = false;
+    updateUIForListening(false);
+    return;
+  }
+
+  try {
+    recognition.start();
+    isListening = true;
+    updateUIForListening(true);
+  } catch (error) {
+    updateUIForError("Mic access failed");
+    console.error("Recognition error:", error);
+  }
+});
