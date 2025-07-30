@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DeepSeek VR Chat</title>
-
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
     #loading {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
@@ -28,7 +27,8 @@
     <a-entity
       id="ai-response"
       text="value: Hello! Ask me anything in VR.; 
-            color: white; align: center; width: 3; wrapCount: 30"
+            color: white; align: center; width: 3;
+            wrapCount: 30"
       position="0 1.5 -2">
     </a-entity>
 
@@ -57,7 +57,11 @@
     </a-entity>
   </a-scene>
 
-  <!-- Load app as module after scene loads -->
+  <!-- Load A-Frame and dependencies -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+  
+  <!-- Load app after everything is ready -->
   <script>
     document.querySelector("a-scene").addEventListener("loaded", () => {
       document.getElementById("loading").style.display = "none";
@@ -67,11 +71,5 @@
       document.body.appendChild(script);
     });
   </script>
-  <!-- Load A-Frame and dependencies -->
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-  
-  <!-- Load app as module -->
-  <script type="module" src="app.js"></script>
 </body>
 </html>
