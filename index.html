@@ -2,13 +2,80 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WebRX VR App</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DeepSeek VR Chat</title>
+
+  <!-- A-Frame and extras -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #loading {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+      z-index: 1000;
+    }
+  </style>
 </head>
 <body>
-  <canvas id="vr-canvas"></canvas>
+  <div id="loading">Loading VR Experience...</div>
 
-  <script type="module" src="vr/viewer.js"></script>
+  <a-scene loading-screen="enabled: false">
+    <!-- Environment -->
+    <a-sky color="#222"></a-sky>
+    <a-circle position="0 -1 0" rotation="-90 0 0" radius="5" color="#333"></a-circle>
+    <a-light type="ambient" intensity="0.5"></a-light>
+    <a-light type="directional" intensity="0.8" position="-1 2 -2"></a-light>
+
+    <!-- Camera with Cursor -->
+    <a-entity camera look-controls>
+      <a-cursor></a-cursor>
+    </a-entity>
+
+    <!-- AI Response Text -->
+    <a-entity
+      id="ai-response"
+      text="value: Hello! Ask me anything in VR.; color: white; align: center; width: 3; wrapCount: 30"
+      position="0 1.5 -2">
+    </a-entity>
+
+    <!-- Microphone Button -->
+    <a-entity
+      id="mic-button"
+      geometry="primitive: sphere; radius: 0.2"
+      material="color: red; shader: flat"
+      position="0 0.5 -1"
+      animation="property: scale; to: 1.2 1.2 1.2; dur: 1000; loop: true; dir: alternate"
+      cursor-listener>
+      <a-entity
+        text="value: Click to Speak; color: white; align: center; width: 0.5"
+        position="0 -0.3 0">
+      </a-entity>
+    </a-entity>
+
+    <!-- User Prompt -->
+    <a-entity
+      id="user-prompt"
+      text="value: Ready; color: #0ff; align: center; width: 2"
+      position="0 1 -1.5"
+      visible="false">
+    </a-entity>
+  </a-scene>
+
+  <!-- Load app.js after scene is ready -->
+  <script>
+    document.querySelector("a-scene").addEventListener("loaded", () => {
+      document.getElementById("loading").style.display = "none";
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'app.js';
+      document.body.appendChild(script);
+    });
+  </script>
 </body>
 </html>
+
