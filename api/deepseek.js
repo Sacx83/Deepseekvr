@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const { prompt } = req.body;
 
   try {
-    const response = await fetch('https://api.deepseek.com/v1/chat', {
+    const response = await fetch('https://api.deepseek.com', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
