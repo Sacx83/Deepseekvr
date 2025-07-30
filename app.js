@@ -1,4 +1,5 @@
 // Initialize Speech Recognition
+import { askDeepSeek, speakText } from './deepseek.js';
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = new SpeechRecognition();
 recognition.lang = 'en-US';
