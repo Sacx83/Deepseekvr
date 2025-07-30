@@ -1,4 +1,5 @@
 // app.js
+console.log("App.js loaded");
 import { askDeepSeek, speakText } from './deepseek.js';
 
 const scene = document.querySelector('a-scene');
