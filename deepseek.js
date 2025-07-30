@@ -1,7 +1,7 @@
 export async function askDeepSeek(prompt) {
   try {
     // Replace with actual DeepSeek API endpoint
-    const response = await fetch('https://api.deepseek.com/v1/chat', {
+    const response = await fetch('https://api.deepseek.com/v1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
