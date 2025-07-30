@@ -3,63 +3,95 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 const recognition = new SpeechRecognition();
 recognition.lang = 'en-US';
 recognition.interimResults = false;
-recognition.maxAlternatives = 1;
-
-// DOM Elements
-const micButton = document.querySelector('#mic-button');
-const aiResponse = document.querySelector('#ai-response');
-const userPrompt = document.querySelector('#user-prompt');
-
-// Import API functions
-import { askDeepSeek, speakText } from './deepseek.js';
 
 // State
 let isListening = false;
+let permissionGranted = false;
 
-// Event Handlers
-const handleSpeechResult = async (event) => {
-  const spokenText = event.results[0][0].transcript;
-  userPrompt.setAttribute('text', 'value', `You: ${spokenText}`);
-  
-  try {
-    const aiResponseText = await askDeepSeek(spokenText);
-    aiResponse.setAttribute('text', 'value', aiResponseText);
-    speakText(aiResponseText);
-  } catch (error) {
-    aiResponse.setAttribute('text', 'value', "Error getting response");
-    console.error("Processing error:", error);
+// Mic Button Handler
+document.querySelector('#mic-button').addEventListener('click', async () => {
+  if (!permissionGranted) {
+    await requestMicrophonePermission();
+    if (!permissionGranted) return;
   }
-  
-  userPrompt.setAttribute('visible', 'false');
-  isListening = false;
-};
 
-const handleError = (event) => {
-  console.error("Speech error:", event.error);
-  userPrompt.setAttribute('text', 'value', `Error: ${event.error}`);
-  setTimeout(() => userPrompt.setAttribute('visible', 'false'), 2000);
-  isListening = false;
-};
-
-// Setup
-recognition.onresult = handleSpeechResult;
-recognition.onerror = handleError;
-
-// Mic Interaction
-micButton.addEventListener('click', () => {
   if (isListening) {
     recognition.stop();
     return;
   }
 
-  recognition.start();
-  isListening = true;
-  userPrompt.setAttribute('visible', 'true');
-  userPrompt.setAttribute('text', 'value', 'Listening...');
-  
-  // Visual feedback
-  micButton.setAttribute('material', 'color', 'green');
-  recognition.onend = () => {
-    micButton.setAttribute('material', 'color', 'red');
-  };
+  try {
+    recognition.start();
+    isListening = true;
+    updateUIForListening(true);
+  } catch (error) {
+    console.error("Mic error:", error);
+    updateUIForError("Mic access denied");
+  }
 });
+
+// Permission Request
+async function requestMicrophonePermission() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    stream.getTracks().forEach(track => track.stop()); // Immediately release
+    permissionGranted = true;
+    return true;
+  } catch (error) {
+    console.error("Permission denied:", error);
+    updateUIForError("Please allow microphone access");
+    return false;
+  }
+}
+
+// UI Updates
+function updateUIForListening(listening) {
+  const micButton = document.querySelector('#mic-button');
+  const userPrompt = document.querySelector('#user-prompt');
+  
+  micButton.setAttribute('material', 'color', listening ? 'green' : 'red');
+  userPrompt.setAttribute('visible', listening);
+  userPrompt.setAttribute('text', 'value', listening ? 'Listening...' : 'Ready');
+}
+
+function updateUIForError(message) {
+  const userPrompt = document.querySelector('#user-prompt');
+  userPrompt.setAttribute('visible', 'true');
+  userPrompt.setAttribute('text', 'value', message);
+  setTimeout(() => userPrompt.setAttribute('visible', 'false'), 3000);
+}
+
+// Speech Recognition Events
+recognition.onresult = (event) => {
+  const transcript = event.results[0][0].transcript;
+  processUserInput(transcript);
+};
+
+recognition.onerror = (event) => {
+  updateUIForError(`Error: ${event.error}`);
+  isListening = false;
+  updateUIForListening(false);
+};
+
+recognition.onend = () => {
+  if (isListening) recognition.start(); // Continuous listening
+};
+
+// Process User Input
+async function processUserInput(text) {
+  const userPrompt = document.querySelector('#user-prompt');
+  const aiResponse = document.querySelector('#ai-response');
+  
+  userPrompt.setAttribute('text', 'value', `You: ${text}`);
+  
+  try {
+    const response = await askDeepSeek(text);
+    aiResponse.setAttribute('text', 'value', response);
+    speakText(response);
+  } catch (error) {
+    aiResponse.setAttribute('text', 'value', "Error getting response");
+  }
+  
+  isListening = false;
+  updateUIForListening(false);
+}
