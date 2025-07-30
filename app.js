@@ -5,79 +5,61 @@ recognition.lang = 'en-US';
 recognition.interimResults = false;
 recognition.maxAlternatives = 1;
 
-// Get DOM elements
+// DOM Elements
 const micButton = document.querySelector('#mic-button');
 const aiResponse = document.querySelector('#ai-response');
 const userPrompt = document.querySelector('#user-prompt');
 
-// State management
+// Import API functions
+import { askDeepSeek, speakText } from './deepseek.js';
+
+// State
 let isListening = false;
 
 // Event Handlers
 const handleSpeechResult = async (event) => {
+  const spokenText = event.results[0][0].transcript;
+  userPrompt.setAttribute('text', 'value', `You: ${spokenText}`);
+  
   try {
-    const spokenText = event.results[0][0].transcript;
-    userPrompt.setAttribute("text", "value", `You: ${spokenText}`);
-    
     const aiResponseText = await askDeepSeek(spokenText);
-    aiResponse.setAttribute("text", "value", aiResponseText);
+    aiResponse.setAttribute('text', 'value', aiResponseText);
     speakText(aiResponseText);
   } catch (error) {
+    aiResponse.setAttribute('text', 'value', "Error getting response");
     console.error("Processing error:", error);
-    userPrompt.setAttribute("text", "value", "Error processing request");
-  } finally {
-    userPrompt.setAttribute("visible", "false");
-    isListening = false;
   }
-};
-
-const handleSpeechError = (event) => {
-  console.error("Speech recognition error:", event.error);
-  userPrompt.setAttribute("text", "value", `Error: ${event.error}`);
-  userPrompt.setAttribute("visible", "false");
+  
+  userPrompt.setAttribute('visible', 'false');
   isListening = false;
 };
 
-const handleSpeechEnd = () => {
-  if (isListening) {
-    recognition.start(); // Restart listening if not manually stopped
-  }
+const handleError = (event) => {
+  console.error("Speech error:", event.error);
+  userPrompt.setAttribute('text', 'value', `Error: ${event.error}`);
+  setTimeout(() => userPrompt.setAttribute('visible', 'false'), 2000);
+  isListening = false;
 };
 
-// Set up event listeners
+// Setup
 recognition.onresult = handleSpeechResult;
-recognition.onerror = handleSpeechError;
-recognition.onend = handleSpeechEnd;
+recognition.onerror = handleError;
 
-// Mic button click handler
-micButton.addEventListener("click", () => {
+// Mic Interaction
+micButton.addEventListener('click', () => {
   if (isListening) {
     recognition.stop();
-    isListening = false;
-    userPrompt.setAttribute("visible", "false");
     return;
   }
 
-  try {
-    recognition.start();
-    isListening = true;
-    userPrompt.setAttribute("visible", "true");
-    userPrompt.setAttribute("text", "value", "Listening...");
-  } catch (error) {
-    console.error("Speech recognition start failed:", error);
-    userPrompt.setAttribute("text", "value", "Error: Mic access denied");
-  }
-});
-
-// Optional: Add visual feedback for listening state
-micButton.addEventListener('mousedown', () => {
-  if (!isListening) {
-    micButton.setAttribute('material', 'color', 'green');
-  }
-});
-
-micButton.addEventListener('mouseup', () => {
-  if (!isListening) {
+  recognition.start();
+  isListening = true;
+  userPrompt.setAttribute('visible', 'true');
+  userPrompt.setAttribute('text', 'value', 'Listening...');
+  
+  // Visual feedback
+  micButton.setAttribute('material', 'color', 'green');
+  recognition.onend = () => {
     micButton.setAttribute('material', 'color', 'red');
-  }
+  };
 });
