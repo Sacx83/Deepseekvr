@@ -1,33 +1,34 @@
-// deepseek.js
-
-const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat"; // Replace if needed
-const API_KEY = "sk-f7980e28711d49929aa19c44e56a4d09"; // (Optional, if required)
-
 export async function askDeepSeek(prompt) {
   try {
-    const response = await fetch(DEEPSEEK_API_URL, {
-      method: "POST",
+    // Replace with actual DeepSeek API endpoint
+    const response = await fetch('https://api.deepseek.com/v1/chat', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        ...(API_KEY && { Authorization: `Bearer ${API_KEY}` }), // Include API key if needed
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer YOUR_API_KEY' // Remove if not needed
       },
       body: JSON.stringify({
-        model: "deepseek-chat", // Adjust based on API
-        messages: [{ role: "user", content: prompt }],
-      }),
+        model: "deepseek-chat",
+        messages: [{ role: "user", content: prompt }]
+      })
     });
 
-    if (!response.ok) throw new Error("API request failed");
+    if (!response.ok) throw new Error(`API Error: ${response.status}`);
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || "No response from AI";
+    
+    // Safely extract response
+    return data?.choices?.[0]?.message?.content || "I didn't understand that.";
+    
   } catch (error) {
-    console.error("DeepSeek Error:", error);
-    return "Sorry, I couldn't fetch a response.";
+    console.error("DeepSeek API Error:", error);
+    return "Sorry, I'm having trouble connecting.";
   }
 }
 
-// (Optional) Add text-to-speech here if you prefer
 export function speakText(text) {
-  const speech = new SpeechSynthesisUtterance(text);
-  window.speechSynthesis.speak(speech);
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(utterance);
+  }
+}
 }
