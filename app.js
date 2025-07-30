@@ -3,6 +3,7 @@ console.log("App.js loaded");
 
 import { askDeepSeek, speakText } from './deepseek.js';
 
+// Elements (assumes scene already loaded)
 const micButton = document.querySelector('#mic-button');
 const aiResponse = document.querySelector('#ai-response');
 const userPrompt = document.querySelector('#user-prompt');
