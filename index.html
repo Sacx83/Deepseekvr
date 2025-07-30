@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script type="module" src="app.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DeepSeek VR Chat</title>
@@ -26,16 +25,6 @@
     <a-circle position="0 -1 0" rotation="-90 0 0" radius="5" color="#333"></a-circle>
     <a-light type="ambient" intensity="0.5"></a-light>
     <a-light type="directional" intensity="0.8" position="-1 2 -2"></a-light>
-
-    <!-- Permission Prompt (hidden initially) -->
-    <a-entity
-      id="permission-prompt"
-      text="value: Please allow microphone access; 
-            color: yellow; align: center; width: 2.5"
-      position="0 1.8 -1.5"
-      visible="false">
-    </a-entity>
-    
 
     <!-- AI Response Panel -->
     <a-entity
@@ -63,18 +52,19 @@
     <!-- User Prompt -->
     <a-entity
       id="user-prompt"
-      text="value: Listening...; 
+      text="value: Ready; 
             color: #0ff; align: center; width: 2"
       position="0 1 -1.5"
       visible="false">
     </a-entity>
   </a-scene>
 
-  <!-- Load app after scene is ready -->
+  <!-- Load app as module after scene loads -->
   <script>
     document.querySelector("a-scene").addEventListener("loaded", () => {
       document.getElementById("loading").style.display = "none";
       const script = document.createElement('script');
+      script.type = 'module';
       script.src = 'app.js';
       document.body.appendChild(script);
     });
