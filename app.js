@@ -1,45 +1,21 @@
-// Initialize Speech Recognition
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
-recognition.lang = 'en-US';
+// app.js
+import { askDeepSeek, speakText } from "./deepseek.js";
 
-// Get VR Elements
-const micButton = document.querySelector('#mic-button');
-const aiResponse = document.querySelector('#ai-response');
-const userPrompt = document.querySelector('#user-prompt');
+// ... (rest of your existing VR code, like micButton event listeners)
 
-// When Mic Button is Clicked (or Gazed at in VR)
-micButton.addEventListener('click', () => {
+// Replace the old askDeepSeek() call with:
+micButton.addEventListener("click", async () => {
   recognition.start();
-  userPrompt.setAttribute('visible', 'true');
-  userPrompt.setAttribute('text', 'value', 'Listening...');
+  userPrompt.setAttribute("visible", "true");
+  userPrompt.setAttribute("text", "value", "Listening...");
+
+  recognition.onresult = async (event) => {
+    const spokenText = event.results[0][0].transcript;
+    userPrompt.setAttribute("text", "value", `You: ${spokenText}`);
+
+    // Use the imported askDeepSeek()
+    const aiResponseText = await askDeepSeek(spokenText);
+    aiResponse.setAttribute("text", "value", aiResponseText);
+    speakText(aiResponseText); // Optional: Make AI speak
+  };
 });
-
-// When Speech is Detected
-recognition.onresult = (event) => {
-  const spokenText = event.results[0][0].transcript;
-  userPrompt.setAttribute('text', 'value', `You: ${spokenText}`);
-  
-  // Send to DeepSeek API (Mock for now)
-  askDeepSeek(spokenText);
-};
-
-// Error Handling
-recognition.onerror = (event) => {
-  userPrompt.setAttribute('text', 'value', `Error: ${event.error}`);
-  setTimeout(() => userPrompt.setAttribute('visible', 'false'), 2000);
-};
-
-// Mock DeepSeek API Call (Replace with real API later)
-function askDeepSeek(prompt) {
-  // TODO: Replace with actual DeepSeek API call
-  const mockResponses = [
-    "I'm DeepSeek VR. You asked: " + prompt,
-    "Interesting question! In VR, the answer is: 42.",
-    "I'm still learning. Try asking me something else."
-  ];
-  const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-  
-  aiResponse.setAttribute('text', 'value', randomResponse);
-  userPrompt.setAttribute('visible', 'false');
-}
