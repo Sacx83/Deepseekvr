@@ -1,6 +1,7 @@
+// deepseek.js
 export async function askDeepSeek(prompt) {
   try {
-    // Replace with actual DeepSeek API endpoint
+    // Replace with actual API endpoint
     const response = await fetch('https://api.deepseek.com/v1', {
       method: 'POST',
       headers: {
@@ -15,8 +16,6 @@ export async function askDeepSeek(prompt) {
 
     if (!response.ok) throw new Error(`API Error: ${response.status}`);
     const data = await response.json();
-    
-    // Safely extract response
     return data?.choices?.[0]?.message?.content || "I didn't understand that.";
     
   } catch (error) {
@@ -28,7 +27,7 @@ export async function askDeepSeek(prompt) {
 export function speakText(text) {
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance(text);
-    speechSynthesis.speak(utterance);
+    utterance.rate = 0.9; // Slightly slower for clarity
+    window.speechSynthesis.speak(utterance);
   }
-}
 }
