@@ -1,20 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Speech Recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
 
-    // Get VR Elements (NOW they exist in the DOM)
-    const micButton = document.querySelector('#mic-button');
-    const aiResponse = document.querySelector('#ai-response');
-    const userPrompt = document.querySelector('#user-prompt');
-
-    // When Mic Button is Clicked
-    micButton.addEventListener('click', () => {
-        recognition.start();
-        userPrompt.setAttribute('visible', 'true');
-        userPrompt.setAttribute('text', 'value', 'Listening...');
-    });
 // app.js
 import { askDeepSeek, speakText } from "./deepseek.js";
 
