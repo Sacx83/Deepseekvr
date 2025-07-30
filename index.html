@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>DeepSeek VR Chat</title>
+    <!-- Load A-Frame -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <!-- Load AFRAME Extras for Text Wrapping -->
+    <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <!-- Custom JS for DeepSeek API -->
+    <script src="app.js"></script>
+  </head>
+  <body>
+    <!-- A-Frame VR Scene -->
+    <a-scene>
+      <!-- Sky (Background) -->
+      <a-sky color="#222"></a-sky>
+
+      <!-- Floating 3D Text Panel for AI Responses -->
+      <a-entity
+        id="ai-response"
+        text="value: Ask me anything in VR!; 
+              color: white; 
+              align: center; 
+              width: 3"
+        position="0 1.5 -2"
+      ></a-entity>
+
+      <!-- Microphone Button (Speech Input) -->
+      <a-entity
+        id="mic-button"
+        geometry="primitive: sphere; radius: 0.2"
+        material="color: red"
+        position="0 0.5 -1"
+        cursor-listener
+      ></a-entity>
+
+      <!-- User Prompt UI -->
+      <a-entity
+        id="user-prompt"
+        text="value: Say something...; 
+              color: white; 
+              align: center; 
+              width: 3"
+        position="0 1 -1.5"
+        visible="false"
+      ></a-entity>
+    </a-scene>
+  </body>
+</html>
