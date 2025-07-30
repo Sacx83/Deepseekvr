@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DeepSeek VR Chat</title>
-  <!-- Load A-Frame first -->
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+
   <style>
     body { margin: 0; overflow: hidden; }
     #loading {
@@ -69,5 +67,11 @@
       document.body.appendChild(script);
     });
   </script>
+  <!-- Load A-Frame and dependencies -->
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://unpkg.com/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+  
+  <!-- Load app as module -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
