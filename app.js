@@ -5,11 +5,22 @@ import { askDeepSeek, speakText } from './deepseek.js';
 const scene = document.querySelector('a-scene');
 
 scene.addEventListener("loaded", () => {
+  console.log("Scene loaded - initializing app");
+
   const micButton = document.querySelector('#mic-button');
   const aiResponse = document.querySelector('#ai-response');
   const userPrompt = document.querySelector('#user-prompt');
 
+  console.log("Mic button:", micButton);
+
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    console.error("SpeechRecognition API not supported in this browser.");
+    userPrompt.setAttribute('text', 'value', 'Speech Recognition not supported');
+    userPrompt.setAttribute('visible', 'true');
+    return;
+  }
+
   const recognition = new SpeechRecognition();
   recognition.lang = 'en-US';
   recognition.interimResults = false;
@@ -19,7 +30,9 @@ scene.addEventListener("loaded", () => {
 
   async function requestMicrophonePermission() {
     try {
+      console.log("Requesting microphone permission...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log("Microphone permission granted.");
       stream.getTracks().forEach(track => track.stop()); // release mic immediately
       return true;
     } catch (error) {
@@ -44,13 +57,16 @@ scene.addEventListener("loaded", () => {
 
   recognition.onresult = async (event) => {
     const transcript = event.results[0][0].transcript;
+    console.log("Speech recognized:", transcript);
     userPrompt.setAttribute('text', 'value', `You: ${transcript}`);
 
     try {
       const response = await askDeepSeek(transcript);
+      console.log("DeepSeek response:", response);
       aiResponse.setAttribute('text', 'value', response);
       speakText(response);
     } catch (error) {
+      console.error("Error processing request:", error);
       updateUIForError("Error processing request");
     }
 
@@ -59,12 +75,15 @@ scene.addEventListener("loaded", () => {
   };
 
   recognition.onerror = (event) => {
+    console.error("Recognition error:", event.error);
     updateUIForError(`Error: ${event.error}`);
     isListening = false;
     updateUIForListening(false);
   };
 
+  console.log('Adding mic button click listener');
   micButton.addEventListener('click', async () => {
+    console.log("Mic button clicked");
     if (!permissionGranted) {
       permissionGranted = await requestMicrophonePermission();
       if (!permissionGranted) return;
@@ -82,8 +101,9 @@ scene.addEventListener("loaded", () => {
       isListening = true;
       updateUIForListening(true);
     } catch (error) {
-      updateUIForError("Mic access failed");
       console.error("Recognition error:", error);
+      updateUIForError("Mic access failed");
     }
   });
 });
+
