@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch('https://api.deepseek.com', {
+    const response = await fetch('https://api.deepseek.com/v1', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
