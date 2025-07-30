@@ -1,7 +1,7 @@
 // deepseek.js
 
 const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat"; // Replace if needed
-const API_KEY = "YOUR_API_KEY"; // (Optional, if required)
+const API_KEY = "sk-f7980e28711d49929aa19c44e56a4d09"; // (Optional, if required)
 
 export async function askDeepSeek(prompt) {
   try {
