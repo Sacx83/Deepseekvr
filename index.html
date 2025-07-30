@@ -1,59 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8">
-    <title>WebRX VR Assistant</title>
+    <meta charset="UTF-8" />
+    <title>DeepSeek VR Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="app.js" type="module"></script>
   </head>
   <body>
     <a-scene>
-      <!-- Camera and Cursor Setup -->
-      <a-entity position="0 1.6 0">
-        <a-camera>
-          <a-cursor
-            raycaster="objects: .clickable"
-            fuse="true"
-            fuse-timeout="1000"
-            position="0 0 -0.01"
-            geometry="primitive: ring; radiusInner: 0.005; radiusOuter: 0.01"
-            material="color: yellow; shader: flat">
-          </a-cursor>
-        </a-camera>
+      <!-- Camera with cursor -->
+      <a-entity id="camera" camera position="0 1.6 0" look-controls>
+        <a-entity
+          cursor="rayOrigin: mouse"
+          raycaster="objects: .clickable"
+          position="0 0 -1"
+          geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+          material="color: #FFC107; shader: flat"
+        ></a-entity>
       </a-entity>
 
-      <!-- Mic Button (clickable) -->
+      <!-- Microphone button -->
       <a-entity
         id="mic-button"
         class="clickable"
-        geometry="primitive: sphere; radius: 0.2"
-        material="color: red; shader: flat"
-        position="0 1.5 -2">
-        <a-entity
-          text="value: Click to Speak; align: center; width: 2; color: white"
-          position="0 -0.35 0">
-        </a-entity>
-      </a-entity>
+        geometry="primitive: circle; radius: 0.2"
+        material="color: #F44336"
+        position="0 1.6 -2"
+      ></a-entity>
 
-      <!-- User Prompt Text -->
-      <a-entity
+      <!-- User prompt display -->
+      <a-text
         id="user-prompt"
-        text="value: Ready; align: center; width: 3; color: #FFFFFF"
-        position="0 2.2 -2"
-        visible="false">
-      </a-entity>
+        value=""
+        position="0 2 -2"
+        align="center"
+        color="#FFF"
+        width="2"
+        visible="false"
+      ></a-text>
 
-      <!-- AI Response Text -->
-      <a-entity
+      <!-- AI response display -->
+      <a-text
         id="ai-response"
-        text="value: Hello! Ask me something...; align: center; width: 3; color: #00FFAA"
-        position="0 1.0 -2">
-      </a-entity>
-
-      <!-- Sky background -->
-      <a-sky color="#222"></a-sky>
+        value=""
+        position="0 1.2 -2"
+        align="center"
+        color="#0FF"
+        width="2.5"
+      ></a-text>
     </a-scene>
+
+    <script type="module" src="./app.js"></script>
   </body>
 </html>
+
 
 
