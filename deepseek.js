@@ -6,7 +6,7 @@ export async function askDeepSeek(prompt) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'sk-8f2ae20f24ed4d1391788c526cba7e5c' // Remove if not needed
+        'Authorization': 'Bearer sk-8f2ae20f24ed4d1391788c526cba7e5c' // Remove if not needed
       },
       body: JSON.stringify({
         model: "deepseek-chat",
